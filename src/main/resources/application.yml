@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: kafkaWikimedia
+  kafka:
+    # Global settings
+    bootstrap-servers: localhost:9092
+    group-id: consumer-opensearch-demo
+    topic: wikimedia.recentchange
+    auto-offset-reset-config: latest #earliest #AUTO_OFFSET_RESET_CONFIG
+    enable-auto-commit-config: false #ENABLE_AUTO_COMMIT_CONFIG
+
+opensearch:
+  connection-uri: http://localhost:9200
+  indices: wikimedia
+
+
+server:
+  #port: 0
+  #if we want spring to choose random port
+  # we need this type of configuration for running multiple instances of spring
+  # application in same machine
+  port: 8083
+  shutdown: graceful
+
+
+
