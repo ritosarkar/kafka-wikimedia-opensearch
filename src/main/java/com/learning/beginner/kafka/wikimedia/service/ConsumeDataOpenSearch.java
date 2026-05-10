@@ -8,8 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.opensearch.action.bulk.BulkRequest;
+import org.opensearch.action.bulk.BulkResponse;
 import org.opensearch.action.index.IndexRequest;
-import org.opensearch.action.index.IndexResponse;
 import org.opensearch.client.RequestOptions;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.common.xcontent.XContentType;
@@ -27,29 +28,37 @@ public class ConsumeDataOpenSearch {
     private final KafkaConsumer<String, String> kafkaConsumer;
     private final Indices indices;
 
-    public void consumeData() throws IOException, InterruptedException {
+    public void consumeData() throws InterruptedException, IOException {
         while (true) {
             ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(3000));
             log.info("Processing {} records -", records.count());
+            BulkRequest bulkRequest = new BulkRequest();
             for (ConsumerRecord<String, String> record : records) {
                 var recordId = extractId(record.value());
                 try {
                     IndexRequest indexRequest = new IndexRequest(indices.getWikimedia())
                             .source(record.value(), XContentType.JSON)
                             .id(recordId);
-                    //Send record to open search
+                    bulkRequest.add(indexRequest);
+                    log.info("Record < {} > added in the bulk request....", recordId);
+                    /*Send each record to open search
                     IndexResponse indexResponse = restHighLevelClient.index(indexRequest, RequestOptions.DEFAULT);
-                    // log.info("<<<<<Successfully processed a record:::===\n {}",record.value());
-                    log.info("Fetch < {} > to see more....", indexResponse.getId());
-                } catch (IOException e) {
+                    log.info("<<<<<Successfully processed a record:::===\n {}",record.value());
+                    log.info("Fetch < {} > to see more....", indexResponse.getId());*/
+                } catch (Exception e) {
                     log.error("Error occurred for {} !!", recordId);
                 }
             }
-            /*When enable.auto.commit = false; we have to manually commit the offset
-            let's say here we will be pushing after every batch has been processed*/
-            kafkaConsumer.commitSync();
-            log.info("Offsets has been commited!! Zero records time-out.....");
-            TimeUnit.SECONDS.sleep(5);
+            if (bulkRequest.numberOfActions() > 0) {
+                BulkResponse bulkResponse = restHighLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+                log.info("Inserted {} record(s).", bulkResponse.getItems().length);
+                /*When enable.auto.commit = false; we have to manually commit the offset
+                let's say here we will be pushing after every batch has been processed*/
+                kafkaConsumer.commitSync();
+                log.info("Offsets has been commited!! Zero records time-out.....");
+                TimeUnit.MILLISECONDS.sleep(5);
+            }
+
         }
     }
 
