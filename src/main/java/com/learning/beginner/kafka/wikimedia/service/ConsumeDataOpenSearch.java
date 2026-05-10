@@ -34,13 +34,17 @@ public class ConsumeDataOpenSearch {
             ConsumerRecords<String,String> records=kafkaConsumer.poll(Duration.ofMillis(3000));
             log.info("Processing {} records -",records.count());
             for(ConsumerRecord<String,String> record:records){
-                IndexRequest indexRequest=new IndexRequest(indices.getWikimedia())
-                        .source(record.value(), XContentType.JSON)
-                        .id(extractId(record.value()));
-               //Send record to open search
-               IndexResponse indexResponse= restHighLevelClient.index(indexRequest, RequestOptions.DEFAULT);
-               // log.info("<<<<<Successfully processed a record:::===\n {}",record.value());
-                log.info("Fetch < {} > to see more....",indexResponse.getId());
+                try {
+                    IndexRequest indexRequest=new IndexRequest(indices.getWikimedia())
+                            .source(record.value(), XContentType.JSON)
+                            .id(extractId(record.value()));
+                    //Send record to open search
+                    IndexResponse indexResponse= restHighLevelClient.index(indexRequest, RequestOptions.DEFAULT);
+                    // log.info("<<<<<Successfully processed a record:::===\n {}",record.value());
+                    log.info("Fetch < {} > to see more....",indexResponse.getId());
+                } catch (IOException e) {
+                    log.info("Error occurred!!");
+                }
             }
         }
     }
