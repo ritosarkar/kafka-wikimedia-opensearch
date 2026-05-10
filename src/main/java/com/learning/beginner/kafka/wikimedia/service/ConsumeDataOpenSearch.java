@@ -20,32 +20,39 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ConsumeDataOpenSearch {
     private final RestHighLevelClient restHighLevelClient;
-    private final KafkaConsumer<String,String> kafkaConsumer;
+    private final KafkaConsumer<String, String> kafkaConsumer;
     private final Indices indices;
 
-    public void consumeData() throws IOException {
-        while (true){
-            ConsumerRecords<String,String> records=kafkaConsumer.poll(Duration.ofMillis(3000));
-            log.info("Processing {} records -",records.count());
-            for(ConsumerRecord<String,String> record:records){
+    public void consumeData() throws IOException, InterruptedException {
+        while (true) {
+            ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(3000));
+            log.info("Processing {} records -", records.count());
+            for (ConsumerRecord<String, String> record : records) {
+                var recordId = extractId(record.value());
                 try {
-                    IndexRequest indexRequest=new IndexRequest(indices.getWikimedia())
+                    IndexRequest indexRequest = new IndexRequest(indices.getWikimedia())
                             .source(record.value(), XContentType.JSON)
-                            .id(extractId(record.value()));
+                            .id(recordId);
                     //Send record to open search
-                    IndexResponse indexResponse= restHighLevelClient.index(indexRequest, RequestOptions.DEFAULT);
+                    IndexResponse indexResponse = restHighLevelClient.index(indexRequest, RequestOptions.DEFAULT);
                     // log.info("<<<<<Successfully processed a record:::===\n {}",record.value());
-                    log.info("Fetch < {} > to see more....",indexResponse.getId());
+                    log.info("Fetch < {} > to see more....", indexResponse.getId());
                 } catch (IOException e) {
-                    log.info("Error occurred!!");
+                    log.error("Error occurred for {} !!", recordId);
                 }
             }
+            /*When enable.auto.commit = false; we have to manually commit the offset
+            let's say here we will be pushing after every batch has been processed*/
+            kafkaConsumer.commitSync();
+            log.info("Offsets has been commited!! Zero records time-out.....");
+            TimeUnit.SECONDS.sleep(5);
         }
     }
 
@@ -57,8 +64,8 @@ public class ConsumeDataOpenSearch {
     //Strategy 2
     //Extract id from JSON value
 
-    private static String extractId(String json){
-       //gson library
+    private static String extractId(String json) {
+        //gson library
         return JsonParser.parseString(json)
                 .getAsJsonObject()
                 .get("meta")

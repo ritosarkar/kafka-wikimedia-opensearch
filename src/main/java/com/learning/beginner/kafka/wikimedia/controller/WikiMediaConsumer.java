@@ -13,7 +13,7 @@ public class WikiMediaConsumer {
     public final ConsumeDataOpenSearch consumeDataOpenSearch;
 
     @PostMapping("/processIndex")
-    public void processToOpenSearch() throws IOException {
+    public void processToOpenSearch() throws IOException, InterruptedException {
         consumeDataOpenSearch.consumeData();
 
     }

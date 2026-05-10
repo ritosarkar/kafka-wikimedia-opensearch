@@ -7,7 +7,7 @@ spring:
     group-id: consumer-opensearch-demo
     topic: wikimedia.recentchange
     auto-offset-reset-config: latest #earliest #AUTO_OFFSET_RESET_CONFIG
-    enable-auto-commit-config: true #ENABLE_AUTO_COMMIT_CONFIG
+    enable-auto-commit-config: false #ENABLE_AUTO_COMMIT_CONFIG
 
 opensearch:
   connection-uri: http://localhost:9200
