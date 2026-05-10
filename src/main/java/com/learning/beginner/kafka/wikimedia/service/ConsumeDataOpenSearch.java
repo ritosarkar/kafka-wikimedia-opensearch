@@ -1,11 +1,8 @@
 package com.learning.beginner.kafka.wikimedia.service;
 
-import com.google.gson.JsonParseException;
+
 import com.google.gson.JsonParser;
 import com.learning.beginner.kafka.wikimedia.config.Indices;
-import com.learning.beginner.kafka.wikimedia.config.OpenSearchConfigurations;
-import com.learning.beginner.kafka.wikimedia.config.Topics;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
