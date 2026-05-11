@@ -64,7 +64,7 @@ public class ConsumeDataOpenSearch {
 
 
     //Strategy 1
-    //Define Id using kafka record
+    //Define id using kafka record
     //String id= record.topic()+"_"+record.partition()+"_"+record.offset()
     //===================================================================//
     //Strategy 2
