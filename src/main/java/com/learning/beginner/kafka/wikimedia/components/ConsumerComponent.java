@@ -26,6 +26,6 @@ public class ConsumerComponent {
         kafkaConsumer.close();
         log.info("Closing opensearch client!!");
         restHighLevelClient.close();
-        log.info("Consumer is now gracefully shutdown!!!");
+        log.info("All clients are now gracefully shutdown!!!");
     }
 }
